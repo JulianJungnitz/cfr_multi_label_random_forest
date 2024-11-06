@@ -7,7 +7,7 @@ from neo4j import GraphDatabase, Query, Record
 from neo4j.exceptions import ServiceUnavailable
 from pandas import DataFrame
 
-from utils import read_config,write_output
+from utils import read_config, write_output
 
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -26,15 +26,18 @@ logger = logging.getLogger(__name__)
 old_logger_i = logger.info
 old_logger_e = logger.error
 
+
 def new_logger_i(msg):
     with open("./i_log.txt", "a") as f:
         f.write(f"{msg}\n")
     old_logger_i(msg)
 
+
 def new_logger_e(msg):
     with open("./e_log.txt", "a") as f:
         f.write(f"{msg}\n")
     old_logger_e(msg)
+
 
 logger.info = new_logger_i
 logger.error = new_logger_e
@@ -47,9 +50,10 @@ NEO4J_PASSWORD = neo4j_credentials.get("NEO4J_PASSWORD", "")
 NEO4J_DB = neo4j_credentials.get("NEO4J_DB", "")
 logger.info(f"Neo4j Connect to {NEO4J_URI} using {NEO4J_USERNAME}")
 
+
 def request(query, parse_func):
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USERNAME, NEO4J_PASSWORD))
-    with driver.session(database=NEO4J_DB) as session: 
+    with driver.session(database=NEO4J_DB) as session:
         try:
             ret = parse_func(session.run(query))
             logger.info(query)
@@ -60,185 +64,144 @@ def request(query, parse_func):
         finally:
             driver.close()
 
-@app_state('initial')
+
+@app_state("initial")
 class ExecuteState(AppState):
 
     def register(self):
-        self.register_transition('terminal', Role.BOTH)
+        self.register_transition("terminal", Role.BOTH)
 
-        
-    def run(self):
+    def get_binaries(self):
         ## Retriving Phenotypes
-        pheno_data = request("""
-MATCH (:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-RETURN DISTINCT ph.id AS phenotype
-""", lambda data: [r["phenotype"] for r in data])
+        pheno_data = request(
+            """
+            MATCH (:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+            RETURN DISTINCT ph.id AS phenotype
+            """,
+            lambda data: [r["phenotype"] for r in data],
+        )
         assert pheno_data
         mlb_pheno = MultiLabelBinarizer()
         mlb_pheno.fit_transform(pheno_data)
-        
-        gene_data = request("""
-MATCH (:Biological_sample)-[:HAS_DAMAGE]->(g:Gene)
-RETURN DISTINCT g.id AS genes
-""", lambda data: [r["genes"] for r in data])
+
+        gene_data = request(
+            """
+            MATCH (:Biological_sample)-[:HAS_DAMAGE]->(g:Gene)
+            RETURN DISTINCT g.id AS genes
+            """,
+            lambda data: [r["genes"] for r in data],
+        )
         assert gene_data
-        
+
         mlb_gene = MultiLabelBinarizer()
         mlb_gene.fit_transform(gene_data)
-        
-        
-        # Get Neo4j credentials from config
-        # print("Gotten to credentials part")
-        
-        # Driver instantiation
+        return mlb_pheno, mlb_gene
 
-        # Get Neo4j credentials from config
-        # print("Gotten to credentials part")
-        
-        # Driver instantiation
-        
+    def create_not_diseased_dataframe(self, mlb_pheno, mlb_gene):
         delta_test = request(
             """
-MATCH (b:Biological_sample)
-WHERE NOT (b:Biological_sample)-[:HAS_DISEASE]->()
-OPTIONAL MATCH (b:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-OPTIONAL MATCH (b)-[:HAS_DAMAGE]->(g:Gene)
-RETURN b.subjectid as subject_id, collect(DISTINCT ph.id) AS phenotypes, collect(DISTINCT g.id) AS genes
+            MATCH (b:Biological_sample)
+            WHERE NOT (b:Biological_sample)-[:HAS_DISEASE]->()
+            OPTIONAL MATCH (b:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+            OPTIONAL MATCH (b)-[:HAS_DAMAGE]->(g:Gene)
+            RETURN b.subjectid as subject_id, collect(DISTINCT ph.id) AS phenotypes, collect(DISTINCT g.id) AS genes
 
-""",
-            lambda data: [{
-                "subject_id": r["subject_id"], 
-                "pheno_type": r["phenotypes"],
-                "genes": r["genes"]
-            } for r in data]
-        ) 
-        
+            """,
+            lambda data: [
+                {
+                    "subject_id": r["subject_id"],
+                    "pheno_type": r["phenotypes"],
+                    "genes": r["genes"],
+                }
+                for r in data
+            ],
+        )
+
         data_test = pd.DataFrame(delta_test)
-        df_pheno_encoded_test = pd.DataFrame(data_test['pheno_type'], columns=mlb_pheno.classes_)
-        df_gene_encoded_test = pd.DataFrame(data_test['genes'], columns=mlb_gene.classes_)
-        df_final_test = pd.concat([data_test[['subject_id']],df_pheno_encoded_test,df_gene_encoded_test], axis=1)
+        df_pheno_encoded_test = pd.DataFrame(
+            data_test["pheno_type"], columns=mlb_pheno.classes_
+        )
+        df_gene_encoded_test = pd.DataFrame(
+            data_test["genes"], columns=mlb_gene.classes_
+        )
+        df_final_test = pd.concat(
+            [data_test[["subject_id"]], df_pheno_encoded_test, df_gene_encoded_test],
+            axis=1,
+        )
         df_test = df_final_test
-        X_test = df_test.drop(['subject_id'], axis=1)
-        
-        ## TYPE 1
+        X_test = df_test.drop(["subject_id"], axis=1)
+        return X_test, df_test
+    
+    def get_full_dataframe(self, mlb_pheno, mlb_gene):
         delta = request(
             """
-MATCH (b:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
-        WHERE NOT d.name = 'control'
-        OPTIONAL MATCH (b)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-        OPTIONAL MATCH (b)-[:HAS_DAMAGE]->(g:Gene)
-        WITH b,
-            collect(DISTINCT ph.id) AS phenotypes,
-            collect(DISTINCT g.id) AS genes,
-            d.synonyms AS synonyms
-        UNWIND synonyms AS synonym
-        WITH b, phenotypes, synonym,genes
-        WHERE synonym CONTAINS 'ICD10CM:'
-        RETURN b.subjectid AS subject_id,
-            phenotypes,genes,
-            substring(synonym, size('ICD10CM:'), 1) AS disease
-
-""",
-            lambda data: [{
-                "subject_id": r["subject_id"], 
-                "disease": r["disease"],
-                "genes": r["genes"],
-                "pheno_type": r["phenotypes"]
-            } for r in data]
+            MATCH (b:Biological_sample)
+                OPTIONAL MATCH (b)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+                OPTIONAL MATCH (b)-[:HAS_Damage]->(g:Gene)
+                OPTIONAL MATCH (b)-[:HAS_DISEASE]->(d:Disease)
+                RETURN b.subjectid AS subject_id,
+                    collect(DISTINCT ph.id) AS phenotypes,
+                    collect(DISTINCT g.id) AS genes,
+                    CASE WHEN d.name = 'control' THEN 0 ELSE 1 END AS disease
+            """,
+            lambda data: [
+                {
+                    "subject_id": r["subject_id"],
+                    "disease": r["disease"],
+                    "pheno_type": r["phenotypes"],
+                    "genes": r["genes"],
+                }
+                for r in data
+            ],
         )
 
         data = pd.DataFrame(delta)
-        df_pheno_encoded = pd.DataFrame(data['pheno_type'], columns=mlb_pheno.classes_)
-        df_gene_encoded = pd.DataFrame(data['genes'], columns=mlb_gene.classes_)
-        df_final = pd.concat([data[['subject_id']], df_pheno_encoded, df_gene_encoded,data['disease']], axis=1)
-    
-        logging.info("Data processed")
-        df = df_final
-        X = df.drop(['subject_id', 'disease'], axis=1)
-        y = df['disease']
-        label_encoder = LabelEncoder()
-        y = label_encoder.fit_transform(y)
-        classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-        # classifier.fit(X, y)
-        
-        X_train, X_t, y_train, y_t = train_test_split(X, y, test_size=0.15, random_state=42)
-        classifier.fit(X_train, y_train)
-        # classifier.fit(X_train, y_train)
-        logger.info("Model finished training")
-        y_p = classifier.predict(X_t)
-        logger.info(classification_report(y_t, y_p))
-        logger.info(f"Accuracy: {accuracy_score(y_t, y_p)}")
+        df_pheno_encoded = pd.DataFrame(data["pheno_type"], columns=mlb_pheno.classes_)
+        df_gene_encoded = pd.DataFrame(data["genes"], columns=mlb_gene.classes_)
+        df_final = pd.concat(
+            [data[["subject_id"]], df_pheno_encoded, df_gene_encoded, data["disease"]],
+            axis=1,
+        )
+        return df_final
 
-        # Split the data
-        # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        # classifier.fit(X_train, y_train)
-        logger.info("Model finished training")
-        # Predict the test set
-        y_pred = classifier.predict(X_test)
-        y_pred = label_encoder.inverse_transform(y_pred)
-        
-        
-        results_df = pd.DataFrame({
-            'subject_id': df_test['subject_id'],  # or X_test['subject_id'] if 'subject_id' is a column
-            'disease': y_pred
-        })
-        logger.info(results_df.to_csv())
-        results_df.to_csv('./predictions_B.csv')
+    def run(self):
 
-        # logger.info(classification_report(y_test, y_pred))
-        # logger.info(f"Accuracy: {accuracy_score(y_test, y_pred)}")
+        mlb_pheno, mlb_gene = self.get_binaries()
+
+        X_test, df_test = self.create_not_diseased_dataframe(mlb_pheno, mlb_gene)
 
         ## TYPE 0
-        logger.info("Doing type 1 now")
+        logger.info("Doing type 0 now")
 
-        delta = request(
-            """
-MATCH (b:Biological_sample)
-    OPTIONAL MATCH (b)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-    OPTIONAL MATCH (b)-[:HAS_Damage]->(g:Gene)
-    OPTIONAL MATCH (b)-[:HAS_DISEASE]->(d:Disease)
-    RETURN b.subjectid AS subject_id,
-        collect(DISTINCT ph.id) AS phenotypes,
-        collect(DISTINCT g.id) AS genes,
-        CASE WHEN d.name = 'control' THEN 0 ELSE 1 END AS disease
-""",
-            lambda data: [{
-                "subject_id": r["subject_id"], 
-                "disease": r["disease"],
-                "pheno_type": r["phenotypes"],
-                 "genes": r["genes"]
-            } for r in data]
-        )
-
-        data = pd.DataFrame(delta)
-        df_pheno_encoded = pd.DataFrame(data['pheno_type'], columns=mlb_pheno.classes_)
-        df_gene_encoded = pd.DataFrame(data['genes'], columns=mlb_gene.classes_)
-        df_final = pd.concat([data[['subject_id']], df_pheno_encoded,df_gene_encoded, data['disease']], axis=1)
+    
+        df_final = self.get_full_dataframe(mlb_pheno, mlb_gene)
 
         logging.info("Data processed")
 
         df = df_final
-        X = df.drop(['subject_id', 'disease'], axis=1)
-        y = df['disease']
+        X = df.drop(["subject_id", "disease"], axis=1)
+        y = df["disease"]
 
         classifier = RandomForestClassifier(n_estimators=100, random_state=42)
 
         # Split the data
-        X_train, X_t, y_train, y_t = train_test_split(X, y, test_size=0.15, random_state=42)
+        X_train, X_t, y_train, y_t = train_test_split(
+            X, y, test_size=0.15, random_state=42
+        )
+        print("Shapes: ", X_train.shape, X_t.shape, y_train.shape, y_t.shape)
         classifier.fit(X_train, y_train)
         # classifier.fit(X_train, y_train)
         logger.info("Model finished training")
         y_p = classifier.predict(X_t)
         logger.info(classification_report(y_t, y_p))
         logger.info(f"Accuracy: {accuracy_score(y_t, y_p)}")
-        
+
         # Predict the test set
         y_pred = classifier.predict(X_test)
-        results_df = pd.DataFrame({
-            'subject_id': df_test['subject_id'], 
-            'disease': y_pred
-        })
-        results_df.to_csv('./predictions_A.csv')
+        results_df = pd.DataFrame(
+            {"subject_id": df_test["subject_id"], "disease": y_pred}
+        )
+        results_df.to_csv("./predictions_A.csv")
         logger.info(results_df.to_csv())
 
-        return 'terminal'
+        return "terminal"

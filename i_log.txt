@@ -1,0 +1,645 @@
+Starting the program
+Connecting to Neo4j
+Neo4j Connect to bolt://83.229.84.12:7687 using tumaiReadonly
+Connected to Neo4j
+Split type: False
+
+    MATCH (:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+    RETURN DISTINCT ph.id AS phenotype
+    
+Query returned 152 records
+
+    MATCH (:Biological_sample)-[:HAS_DAMAGE]->(g:Gene)
+    RETURN DISTINCT g.id AS genes
+    
+Query returned 500 records
+
+    MATCH (bs:Biological_sample)
+    Optional MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+    Optional MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
+    Optional MATCH (bs)-[:HAS_DISEASE]->(d:Disease)
+    RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
+    
+Query returned 100 records
+Control:     subject_id                                         phenotypes  \
+80     1687521  [HP:0002901, HP:0001880, HP:0003118, HP:002554...   
+84     1687525  [HP:0001899, HP:0025435, HP:0012101, HP:001241...   
+33     1687474  [HP:0012417, HP:0012416, HP:0003072, HP:000290...   
+81     1687522  [HP:0031851, HP:0003074, HP:0032369, HP:000215...   
+93     1687534  [HP:0410174, HP:0020059, HP:0002907, HP:000214...   
+17     1687458  [HP:0012085, HP:0032067, HP:0031200, HP:000323...   
+36     1687477  [HP:0020059, HP:0012311, HP:0003073, HP:002006...   
+82     1687523  [HP:0002905, HP:0001873, HP:0002148, HP:000313...   
+69     1687510  [HP:0031963, HP:0003073, HP:0003645, HP:001211...   
+65     1687506  [HP:0002901, HP:0003645, HP:0031200, HP:002545...   
+92     1687533  [HP:0032310, HP:0020063, HP:0032066, HP:000315...   
+39     1687480  [HP:0002900, HP:0001943, HP:0002901, HP:000314...   
+56     1687497  [HP:0001974, HP:0031965, HP:0012311, HP:001189...   
+52     1687493  [HP:0012101, HP:0001974, HP:0410174, HP:003195...   
+51     1687492  [HP:0002907, HP:0032067, HP:0003138, HP:003196...   
+32     1687473  [HP:0032198, HP:0031964, HP:0002905, HP:001208...   
+31     1687472  [HP:0031851, HP:0012419, HP:0012117, HP:000311...   
+44     1687485  [HP:0012418, HP:0003113, HP:0020062, HP:000307...   
+78     1687519  [HP:0012416, HP:0002907, HP:0031969, HP:000307...   
+10     1687451  [HP:0002918, HP:0020062, HP:0020059, HP:000189...   
+
+                                                genes  \
+80                [RNU1-82P, MRPL42P2, PRRG2, IGHEP2]   
+84                                [MMP12, CST4, CHD6]   
+33                              [SNRPCP18, RN7SL368P]   
+81  [LMCD1, PNMA3, DDHD1, MTND5P9, PCDHGA4, H3C13,...   
+93               [GTF2H3, LINC02367, BMS1P13, MTFR1L]   
+17                                      [LRIT2, PHF2]   
+36  [SDHAP3, LINC02559, FARS2, MIR5588, RNY4P22, T...   
+82                    [KRT18P44, CREM, IRF2BPL, RFC4]   
+69  [ZNF18, BCRP6, CPNE1, RNU6-380P, RPS17P3, ASH2...   
+65  [RPSAP11, TRC-ACA1-1, ELOCP36, RN7SL722P, RNA5...   
+92                          [WBP1LP2, MIR549A, RAP1B]   
+39                [NLGN2, LINC02877, MROH3P, MIR4267]   
+56   [CXCR3, ZNF267, PPIAP88, RPL29P28, ATP6V1B1-AS1]   
+52  [SLC13A2, SNORD144, RPS26P2, AMLCR2, RANBP9, I...   
+51                [ERICH5, MIR25, TP73, ELAC2, MUC12]   
+32  [SLC1A1, PCDHGC3, TRAJ21, CYP4F33P, IGHV1-69-2...   
+31  [FHL1, BMP2K-DT, GTF2IP22, IER3IP1, OSTM1-AS1,...   
+44                         [MITD1, RNU6-1146P, ARMC1]   
+78  [NPM1P11, GCSH, RN7SL636P, CYCSP30, SLC27A6, L...   
+10  [HMGB3P6, TMEM218, LINC01566, PSMA3P1, HCLS1, ...   
+
+                                             diseases  \
+80                            [DOID:9651, DOID:11963]   
+84                                        [DOID:9775]   
+33                                                 []   
+81                             [DOID:3393, DOID:9651]   
+93                                                 []   
+17                                                 []   
+36                               [DOID:9119, DOID:74]   
+82                            [DOID:4372, DOID:10030]   
+69                                                 []   
+65                                        [DOID:8717]   
+92                            [DOID:11520, DOID:2089]   
+39                                       [DOID:10030]   
+56  [DOID:12785, DOID:1227, DOID:999, DOID:12449, ...   
+52                [DOID:9651, DOID:11520, DOID:12387]   
+51                                        [DOID:3393]   
+32                                                 []   
+31                                        [DOID:1470]   
+44                                       [DOID:10030]   
+78                         [DOID:10914, DOID:0050778]   
+10                                       [DOID:13446]   
+
+                                        disease_names  
+80              [systolic heart failure, esophagitis]  
+84                          [diastolic heart failure]  
+33                                                 []  
+81  [coronary artery disease, systolic heart failure]  
+93                                                 []  
+17                                          [control]  
+36  [acute myeloid leukemia, hematopoietic system ...  
+82  [intracranial embolism, pulmonary interstitial...  
+69                                                 []  
+65                                  [decubitus ulcer]  
+92  [benign hypertensive renal disease, constipation]  
+39                 [pulmonary interstitial emphysema]  
+56  [diabetic polyneuropathy, neutropenia, hypereo...  
+52  [systolic heart failure, benign hypertensive r...  
+51                          [coronary artery disease]  
+32                                                 []  
+31                        [major depressive disorder]  
+44                 [pulmonary interstitial emphysema]  
+78               [amnestic disorder, Meckel syndrome]  
+10                         [basilar artery occlusion]  
+DataFrame before exploding: 80 rows before exploding.
+DataFrame exploded: 134 rows after exploding.
+Training classifier
+Classifier trained
+Control1:     subject_id                                         phenotypes  \
+80     1687521  [HP:0002901, HP:0001880, HP:0003118, HP:002554...   
+84     1687525  [HP:0001899, HP:0025435, HP:0012101, HP:001241...   
+33     1687474  [HP:0012417, HP:0012416, HP:0003072, HP:000290...   
+81     1687522  [HP:0031851, HP:0003074, HP:0032369, HP:000215...   
+93     1687534  [HP:0410174, HP:0020059, HP:0002907, HP:000214...   
+17     1687458  [HP:0012085, HP:0032067, HP:0031200, HP:000323...   
+36     1687477  [HP:0020059, HP:0012311, HP:0003073, HP:002006...   
+82     1687523  [HP:0002905, HP:0001873, HP:0002148, HP:000313...   
+69     1687510  [HP:0031963, HP:0003073, HP:0003645, HP:001211...   
+65     1687506  [HP:0002901, HP:0003645, HP:0031200, HP:002545...   
+92     1687533  [HP:0032310, HP:0020063, HP:0032066, HP:000315...   
+39     1687480  [HP:0002900, HP:0001943, HP:0002901, HP:000314...   
+56     1687497  [HP:0001974, HP:0031965, HP:0012311, HP:001189...   
+52     1687493  [HP:0012101, HP:0001974, HP:0410174, HP:003195...   
+51     1687492  [HP:0002907, HP:0032067, HP:0003138, HP:003196...   
+32     1687473  [HP:0032198, HP:0031964, HP:0002905, HP:001208...   
+31     1687472  [HP:0031851, HP:0012419, HP:0012117, HP:000311...   
+44     1687485  [HP:0012418, HP:0003113, HP:0020062, HP:000307...   
+78     1687519  [HP:0012416, HP:0002907, HP:0031969, HP:000307...   
+10     1687451  [HP:0002918, HP:0020062, HP:0020059, HP:000189...   
+
+                                                genes  \
+80                [RNU1-82P, MRPL42P2, PRRG2, IGHEP2]   
+84                                [MMP12, CST4, CHD6]   
+33                              [SNRPCP18, RN7SL368P]   
+81  [LMCD1, PNMA3, DDHD1, MTND5P9, PCDHGA4, H3C13,...   
+93               [GTF2H3, LINC02367, BMS1P13, MTFR1L]   
+17                                      [LRIT2, PHF2]   
+36  [SDHAP3, LINC02559, FARS2, MIR5588, RNY4P22, T...   
+82                    [KRT18P44, CREM, IRF2BPL, RFC4]   
+69  [ZNF18, BCRP6, CPNE1, RNU6-380P, RPS17P3, ASH2...   
+65  [RPSAP11, TRC-ACA1-1, ELOCP36, RN7SL722P, RNA5...   
+92                          [WBP1LP2, MIR549A, RAP1B]   
+39                [NLGN2, LINC02877, MROH3P, MIR4267]   
+56   [CXCR3, ZNF267, PPIAP88, RPL29P28, ATP6V1B1-AS1]   
+52  [SLC13A2, SNORD144, RPS26P2, AMLCR2, RANBP9, I...   
+51                [ERICH5, MIR25, TP73, ELAC2, MUC12]   
+32  [SLC1A1, PCDHGC3, TRAJ21, CYP4F33P, IGHV1-69-2...   
+31  [FHL1, BMP2K-DT, GTF2IP22, IER3IP1, OSTM1-AS1,...   
+44                         [MITD1, RNU6-1146P, ARMC1]   
+78  [NPM1P11, GCSH, RN7SL636P, CYCSP30, SLC27A6, L...   
+10  [HMGB3P6, TMEM218, LINC01566, PSMA3P1, HCLS1, ...   
+
+                                             diseases  \
+80                            [DOID:9651, DOID:11963]   
+84                                        [DOID:9775]   
+33                                                 []   
+81                             [DOID:3393, DOID:9651]   
+93                                                 []   
+17                                                 []   
+36                               [DOID:9119, DOID:74]   
+82                            [DOID:4372, DOID:10030]   
+69                                                 []   
+65                                        [DOID:8717]   
+92                            [DOID:11520, DOID:2089]   
+39                                       [DOID:10030]   
+56  [DOID:12785, DOID:1227, DOID:999, DOID:12449, ...   
+52                [DOID:9651, DOID:11520, DOID:12387]   
+51                                        [DOID:3393]   
+32                                                 []   
+31                                        [DOID:1470]   
+44                                       [DOID:10030]   
+78                         [DOID:10914, DOID:0050778]   
+10                                       [DOID:13446]   
+
+                                        disease_names  
+80              [systolic heart failure, esophagitis]  
+84                          [diastolic heart failure]  
+33                                                 []  
+81  [coronary artery disease, systolic heart failure]  
+93                                                 []  
+17                                          [control]  
+36  [acute myeloid leukemia, hematopoietic system ...  
+82  [intracranial embolism, pulmonary interstitial...  
+69                                                 []  
+65                                  [decubitus ulcer]  
+92  [benign hypertensive renal disease, constipation]  
+39                 [pulmonary interstitial emphysema]  
+56  [diabetic polyneuropathy, neutropenia, hypereo...  
+52  [systolic heart failure, benign hypertensive r...  
+51                          [coronary artery disease]  
+32                                                 []  
+31                        [major depressive disorder]  
+44                 [pulmonary interstitial emphysema]  
+78               [amnestic disorder, Meckel syndrome]  
+10                         [basilar artery occlusion]  
+Control2:     subject_id                                           diseases  \
+0      1687521                            [DOID:9651, DOID:11963]   
+1      1687525                                        [DOID:9775]   
+2      1687474                                                 []   
+3      1687522                             [DOID:3393, DOID:9651]   
+4      1687534                                                 []   
+5      1687458                                                 []   
+6      1687477                               [DOID:9119, DOID:74]   
+7      1687523                            [DOID:4372, DOID:10030]   
+8      1687510                                                 []   
+9      1687506                                        [DOID:8717]   
+10     1687533                            [DOID:11520, DOID:2089]   
+11     1687480                                       [DOID:10030]   
+12     1687497  [DOID:12785, DOID:1227, DOID:999, DOID:12449, ...   
+13     1687493                [DOID:9651, DOID:11520, DOID:12387]   
+14     1687492                                        [DOID:3393]   
+15     1687473                                                 []   
+16     1687472                                        [DOID:1470]   
+17     1687485                                       [DOID:10030]   
+18     1687519                         [DOID:10914, DOID:0050778]   
+19     1687451                                       [DOID:13446]   
+
+                                        disease_names  HP:0000093  HP:0000829  \
+0               [systolic heart failure, esophagitis]           0           0   
+1                           [diastolic heart failure]           0           0   
+2                                                  []           0           0   
+3   [coronary artery disease, systolic heart failure]           1           1   
+4                                                  []           0           0   
+5                                           [control]           0           0   
+6   [acute myeloid leukemia, hematopoietic system ...           0           0   
+7   [intracranial embolism, pulmonary interstitial...           0           0   
+8                                                  []           0           0   
+9                                   [decubitus ulcer]           0           0   
+10  [benign hypertensive renal disease, constipation]           0           0   
+11                 [pulmonary interstitial emphysema]           0           0   
+12  [diabetic polyneuropathy, neutropenia, hypereo...           1           1   
+13  [systolic heart failure, benign hypertensive r...           0           0   
+14                          [coronary artery disease]           0           0   
+15                                                 []           0           0   
+16                        [major depressive disorder]           0           0   
+17                 [pulmonary interstitial emphysema]           0           0   
+18               [amnestic disorder, Meckel syndrome]           0           0   
+19                         [basilar artery occlusion]           0           0   
+
+    HP:0000843  HP:0000870  HP:0001873  HP:0001880  HP:0001882  ...  ZNF18  \
+0            0           0           1           1           1  ...      0   
+1            0           0           0           0           1  ...      0   
+2            0           1           0           1           1  ...      0   
+3            1           0           1           0           1  ...      0   
+4            0           0           1           0           1  ...      0   
+5            0           0           1           0           1  ...      0   
+6            0           0           1           0           1  ...      0   
+7            0           0           1           0           1  ...      0   
+8            0           0           0           0           0  ...      1   
+9            0           0           0           1           0  ...      0   
+10           0           0           1           0           1  ...      0   
+11           0           0           0           0           1  ...      0   
+12           1           1           1           1           1  ...      0   
+13           0           0           1           1           1  ...      0   
+14           0           0           1           1           1  ...      0   
+15           0           0           0           0           1  ...      0   
+16           0           0           0           0           1  ...      0   
+17           0           0           1           0           1  ...      0   
+18           0           0           0           0           1  ...      0   
+19           0           0           0           0           0  ...      0   
+
+    ZNF233  ZNF267  ZNF284  ZNF321P  ZNF394  ZNF469  ZNF479  ZNF672  ZNF788P  
+0        0       0       0        0       0       0       0       0        0  
+1        0       0       0        0       0       0       0       0        0  
+2        0       0       0        0       0       0       0       0        0  
+3        0       0       0        0       0       0       0       0        0  
+4        0       0       0        0       0       0       0       0        0  
+5        0       0       0        0       0       0       0       0        0  
+6        0       0       0        0       0       0       0       0        0  
+7        0       0       0        0       0       0       0       0        0  
+8        0       0       0        0       0       0       0       0        0  
+9        0       0       0        0       0       0       0       0        0  
+10       0       0       0        0       0       0       0       0        0  
+11       0       0       0        0       0       0       0       0        0  
+12       0       1       0        0       0       0       0       0        0  
+13       0       0       0        0       0       0       0       0        0  
+14       0       0       0        0       0       0       0       0        0  
+15       0       0       0        0       0       0       0       0        0  
+16       0       0       0        0       0       0       0       0        0  
+17       0       0       0        0       0       0       0       0        0  
+18       0       0       0        0       0       0       0       0        0  
+19       0       0       0        0       0       0       0       0        0  
+
+[20 rows x 655 columns]
+DataFrame before exploding: 20 rows before exploding.
+DataFrame exploded: 37 rows after exploding.
+Control3:     subject_id      diseases                      disease_names  HP:0000093  \
+0      1687521     DOID:9651             systolic heart failure           0   
+1      1687521    DOID:11963                        esophagitis           0   
+2      1687525     DOID:9775            diastolic heart failure           0   
+3      1687474           NaN                                NaN           0   
+4      1687522     DOID:3393            coronary artery disease           1   
+5      1687522     DOID:9651             systolic heart failure           1   
+6      1687534           NaN                                NaN           0   
+7      1687458           NaN                            control           0   
+8      1687477     DOID:9119             acute myeloid leukemia           0   
+9      1687477       DOID:74       hematopoietic system disease           0   
+10     1687523     DOID:4372              intracranial embolism           0   
+11     1687523    DOID:10030   pulmonary interstitial emphysema           0   
+12     1687510           NaN                                NaN           0   
+13     1687506     DOID:8717                    decubitus ulcer           0   
+14     1687533    DOID:11520  benign hypertensive renal disease           0   
+15     1687533     DOID:2089                       constipation           0   
+16     1687480    DOID:10030   pulmonary interstitial emphysema           0   
+17     1687497    DOID:12785            diabetic polyneuropathy           1   
+18     1687497     DOID:1227                        neutropenia           1   
+19     1687497      DOID:999         hypereosinophilic syndrome           1   
+20     1687497    DOID:12449                    aplastic anemia           1   
+21     1687497    DOID:10030   pulmonary interstitial emphysema           1   
+22     1687497     DOID:8538                    reticulosarcoma           1   
+23     1687497     DOID:8463                      corneal ulcer           1   
+24     1687497     DOID:9779                  bowel dysfunction           1   
+25     1687497     DOID:9672                               noma           1   
+26     1687497    DOID:14392           thrombophlebitis migrans           1   
+27     1687493     DOID:9651             systolic heart failure           0   
+28     1687493    DOID:11520  benign hypertensive renal disease           0   
+29     1687493    DOID:12387     nephrogenic diabetes insipidus           0   
+30     1687492     DOID:3393            coronary artery disease           0   
+31     1687473           NaN                                NaN           0   
+32     1687472     DOID:1470          major depressive disorder           0   
+33     1687485    DOID:10030   pulmonary interstitial emphysema           0   
+34     1687519    DOID:10914                  amnestic disorder           0   
+35     1687519  DOID:0050778                    Meckel syndrome           0   
+36     1687451    DOID:13446           basilar artery occlusion           0   
+
+    HP:0000829  HP:0000843  HP:0000870  HP:0001873  HP:0001880  HP:0001882  \
+0            0           0           0           1           1           1   
+1            0           0           0           1           1           1   
+2            0           0           0           0           0           1   
+3            0           0           1           0           1           1   
+4            1           1           0           1           0           1   
+5            1           1           0           1           0           1   
+6            0           0           0           1           0           1   
+7            0           0           0           1           0           1   
+8            0           0           0           1           0           1   
+9            0           0           0           1           0           1   
+10           0           0           0           1           0           1   
+11           0           0           0           1           0           1   
+12           0           0           0           0           0           0   
+13           0           0           0           0           1           0   
+14           0           0           0           1           0           1   
+15           0           0           0           1           0           1   
+16           0           0           0           0           0           1   
+17           1           1           1           1           1           1   
+18           1           1           1           1           1           1   
+19           1           1           1           1           1           1   
+20           1           1           1           1           1           1   
+21           1           1           1           1           1           1   
+22           1           1           1           1           1           1   
+23           1           1           1           1           1           1   
+24           1           1           1           1           1           1   
+25           1           1           1           1           1           1   
+26           1           1           1           1           1           1   
+27           0           0           0           1           1           1   
+28           0           0           0           1           1           1   
+29           0           0           0           1           1           1   
+30           0           0           0           1           1           1   
+31           0           0           0           0           0           1   
+32           0           0           0           0           0           1   
+33           0           0           0           1           0           1   
+34           0           0           0           0           0           1   
+35           0           0           0           0           0           1   
+36           0           0           0           0           0           0   
+
+    ...  ZNF18  ZNF233  ZNF267  ZNF284  ZNF321P  ZNF394  ZNF469  ZNF479  \
+0   ...      0       0       0       0        0       0       0       0   
+1   ...      0       0       0       0        0       0       0       0   
+2   ...      0       0       0       0        0       0       0       0   
+3   ...      0       0       0       0        0       0       0       0   
+4   ...      0       0       0       0        0       0       0       0   
+5   ...      0       0       0       0        0       0       0       0   
+6   ...      0       0       0       0        0       0       0       0   
+7   ...      0       0       0       0        0       0       0       0   
+8   ...      0       0       0       0        0       0       0       0   
+9   ...      0       0       0       0        0       0       0       0   
+10  ...      0       0       0       0        0       0       0       0   
+11  ...      0       0       0       0        0       0       0       0   
+12  ...      1       0       0       0        0       0       0       0   
+13  ...      0       0       0       0        0       0       0       0   
+14  ...      0       0       0       0        0       0       0       0   
+15  ...      0       0       0       0        0       0       0       0   
+16  ...      0       0       0       0        0       0       0       0   
+17  ...      0       0       1       0        0       0       0       0   
+18  ...      0       0       1       0        0       0       0       0   
+19  ...      0       0       1       0        0       0       0       0   
+20  ...      0       0       1       0        0       0       0       0   
+21  ...      0       0       1       0        0       0       0       0   
+22  ...      0       0       1       0        0       0       0       0   
+23  ...      0       0       1       0        0       0       0       0   
+24  ...      0       0       1       0        0       0       0       0   
+25  ...      0       0       1       0        0       0       0       0   
+26  ...      0       0       1       0        0       0       0       0   
+27  ...      0       0       0       0        0       0       0       0   
+28  ...      0       0       0       0        0       0       0       0   
+29  ...      0       0       0       0        0       0       0       0   
+30  ...      0       0       0       0        0       0       0       0   
+31  ...      0       0       0       0        0       0       0       0   
+32  ...      0       0       0       0        0       0       0       0   
+33  ...      0       0       0       0        0       0       0       0   
+34  ...      0       0       0       0        0       0       0       0   
+35  ...      0       0       0       0        0       0       0       0   
+36  ...      0       0       0       0        0       0       0       0   
+
+    ZNF672  ZNF788P  
+0        0        0  
+1        0        0  
+2        0        0  
+3        0        0  
+4        0        0  
+5        0        0  
+6        0        0  
+7        0        0  
+8        0        0  
+9        0        0  
+10       0        0  
+11       0        0  
+12       0        0  
+13       0        0  
+14       0        0  
+15       0        0  
+16       0        0  
+17       0        0  
+18       0        0  
+19       0        0  
+20       0        0  
+21       0        0  
+22       0        0  
+23       0        0  
+24       0        0  
+25       0        0  
+26       0        0  
+27       0        0  
+28       0        0  
+29       0        0  
+30       0        0  
+31       0        0  
+32       0        0  
+33       0        0  
+34       0        0  
+35       0        0  
+36       0        0  
+
+[37 rows x 655 columns]
+Control features:     HP:0000093  HP:0000829  HP:0000843  HP:0000870  HP:0001873  HP:0001880  \
+0            0           0           0           0           1           1   
+1            0           0           0           0           1           1   
+2            0           0           0           0           0           0   
+3            0           0           0           1           0           1   
+4            1           1           1           0           1           0   
+5            1           1           1           0           1           0   
+6            0           0           0           0           1           0   
+7            0           0           0           0           1           0   
+8            0           0           0           0           1           0   
+9            0           0           0           0           1           0   
+10           0           0           0           0           1           0   
+11           0           0           0           0           1           0   
+12           0           0           0           0           0           0   
+13           0           0           0           0           0           1   
+14           0           0           0           0           1           0   
+15           0           0           0           0           1           0   
+16           0           0           0           0           0           0   
+17           1           1           1           1           1           1   
+18           1           1           1           1           1           1   
+19           1           1           1           1           1           1   
+20           1           1           1           1           1           1   
+21           1           1           1           1           1           1   
+22           1           1           1           1           1           1   
+23           1           1           1           1           1           1   
+24           1           1           1           1           1           1   
+25           1           1           1           1           1           1   
+26           1           1           1           1           1           1   
+27           0           0           0           0           1           1   
+28           0           0           0           0           1           1   
+29           0           0           0           0           1           1   
+30           0           0           0           0           1           1   
+31           0           0           0           0           0           0   
+32           0           0           0           0           0           0   
+33           0           0           0           0           1           0   
+34           0           0           0           0           0           0   
+35           0           0           0           0           0           0   
+36           0           0           0           0           0           0   
+
+    HP:0001882  HP:0001888  HP:0001894  HP:0001896  ...  ZNF18  ZNF233  \
+0            1           1           1           0  ...      0       0   
+1            1           1           1           0  ...      0       0   
+2            1           1           0           0  ...      0       0   
+3            1           1           0           0  ...      0       0   
+4            1           1           1           0  ...      0       0   
+5            1           1           1           0  ...      0       0   
+6            1           1           1           0  ...      0       0   
+7            1           1           1           0  ...      0       0   
+8            1           1           1           0  ...      0       0   
+9            1           1           1           0  ...      0       0   
+10           1           0           1           0  ...      0       0   
+11           1           0           1           0  ...      0       0   
+12           0           0           0           0  ...      1       0   
+13           0           0           0           0  ...      0       0   
+14           1           1           1           1  ...      0       0   
+15           1           1           1           1  ...      0       0   
+16           1           1           0           0  ...      0       0   
+17           1           1           1           1  ...      0       0   
+18           1           1           1           1  ...      0       0   
+19           1           1           1           1  ...      0       0   
+20           1           1           1           1  ...      0       0   
+21           1           1           1           1  ...      0       0   
+22           1           1           1           1  ...      0       0   
+23           1           1           1           1  ...      0       0   
+24           1           1           1           1  ...      0       0   
+25           1           1           1           1  ...      0       0   
+26           1           1           1           1  ...      0       0   
+27           1           0           1           0  ...      0       0   
+28           1           0           1           0  ...      0       0   
+29           1           0           1           0  ...      0       0   
+30           1           1           1           1  ...      0       0   
+31           1           1           0           0  ...      0       0   
+32           1           0           0           0  ...      0       0   
+33           1           1           1           0  ...      0       0   
+34           1           1           0           0  ...      0       0   
+35           1           1           0           0  ...      0       0   
+36           0           0           0           0  ...      0       0   
+
+    ZNF267  ZNF284  ZNF321P  ZNF394  ZNF469  ZNF479  ZNF672  ZNF788P  
+0        0       0        0       0       0       0       0        0  
+1        0       0        0       0       0       0       0        0  
+2        0       0        0       0       0       0       0        0  
+3        0       0        0       0       0       0       0        0  
+4        0       0        0       0       0       0       0        0  
+5        0       0        0       0       0       0       0        0  
+6        0       0        0       0       0       0       0        0  
+7        0       0        0       0       0       0       0        0  
+8        0       0        0       0       0       0       0        0  
+9        0       0        0       0       0       0       0        0  
+10       0       0        0       0       0       0       0        0  
+11       0       0        0       0       0       0       0        0  
+12       0       0        0       0       0       0       0        0  
+13       0       0        0       0       0       0       0        0  
+14       0       0        0       0       0       0       0        0  
+15       0       0        0       0       0       0       0        0  
+16       0       0        0       0       0       0       0        0  
+17       1       0        0       0       0       0       0        0  
+18       1       0        0       0       0       0       0        0  
+19       1       0        0       0       0       0       0        0  
+20       1       0        0       0       0       0       0        0  
+21       1       0        0       0       0       0       0        0  
+22       1       0        0       0       0       0       0        0  
+23       1       0        0       0       0       0       0        0  
+24       1       0        0       0       0       0       0        0  
+25       1       0        0       0       0       0       0        0  
+26       1       0        0       0       0       0       0        0  
+27       0       0        0       0       0       0       0        0  
+28       0       0        0       0       0       0       0        0  
+29       0       0        0       0       0       0       0        0  
+30       0       0        0       0       0       0       0        0  
+31       0       0        0       0       0       0       0        0  
+32       0       0        0       0       0       0       0        0  
+33       0       0        0       0       0       0       0        0  
+34       0       0        0       0       0       0       0        0  
+35       0       0        0       0       0       0       0        0  
+36       0       0        0       0       0       0       0        0  
+
+[37 rows x 652 columns]
+Control labels: 0     1
+1     1
+2     1
+3     0
+4     1
+5     1
+6     0
+7     1
+8     1
+9     1
+10    1
+11    1
+12    0
+13    1
+14    1
+15    1
+16    1
+17    1
+18    1
+19    1
+20    1
+21    1
+22    1
+23    1
+24    1
+25    1
+26    1
+27    1
+28    1
+29    1
+30    1
+31    0
+32    1
+33    1
+34    1
+35    1
+36    1
+Name: disease_names, dtype: int64
+Predictions: [1 1 1 1 1 1 1 1 1 1 1 1 0 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0]
+Control: 0     1
+1     1
+2     1
+3     0
+4     1
+5     1
+6     0
+7     1
+8     1
+9     1
+10    1
+11    1
+12    0
+13    1
+14    1
+15    1
+16    1
+17    1
+18    1
+19    1
+20    1
+21    1
+22    1
+23    1
+24    1
+25    1
+26    1
+27    1
+28    1
+29    1
+30    1
+31    0
+32    1
+33    1
+34    1
+35    1
+36    1
+Name: disease_names, dtype: int64
+Accuracy: 0.9411764705882353

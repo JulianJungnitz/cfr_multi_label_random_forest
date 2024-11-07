@@ -25,10 +25,17 @@ jobs:
         run: |
           featurecloud controller start &
           sleep 10 
+      
+      - name: Extract App Name
+        id: extract_app_name
+        run: |
+          APP_NAME=$(grep -E '^DOCKER_IMAGE_NAME[ ]*=' Makefile | head -n1 | cut -d '=' -f2 | xargs)
+          echo "Extracted APP_NAME: $APP_NAME"
+          echo "app_name=$APP_NAME" >> $GITHUB_OUTPUT
 
       - name: Build FeatureCloud App
         run: |
-          featurecloud app build .
+          featurecloud app build . ${{ steps.extract_app_name.outputs.app_name }}
 
       - name: Log in to Docker
         env:
@@ -39,6 +46,4 @@ jobs:
 
       - name: Publish FeatureCloud App
         run: |
-          APP_NAME=$(grep -E '^DOCKER_IMAGE_NAME[ ]*=' Makefile | head -n1 | cut -d '=' -f2 | xargs)
-          echo "Extracted APP_NAME: $APP_NAME"
-          featurecloud app publish $APP_NAME
+          featurecloud app publish ${{ steps.extract_app_name.outputs.app_name }}

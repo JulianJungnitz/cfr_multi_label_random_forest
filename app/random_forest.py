@@ -141,7 +141,7 @@ def main():
     driver = utils.connect_to_neo4j()
 
     config = utils.read_config()
-    split_type = config.get("SPLIT_TYPE", "control")
+    split_type = config.get("SPLIT_TYPE", "random")
     split_by_control = split_type== "control"
     explode_diseases = config.get("EXPLODE_DISEASES", True)
     logger.info(f"Split type: {split_by_control}")

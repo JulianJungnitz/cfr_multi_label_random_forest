@@ -1,0 +1,44 @@
+name: Build and Publish FeatureCloud App
+
+on:
+  push
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install FeatureCloud
+        run: |
+          python -m pip install --upgrade pip
+          pip install featurecloud
+
+      - name: Start FeatureCloud Controller
+        run: |
+          featurecloud controller start &
+          sleep 10 
+
+      - name: Build FeatureCloud App
+        run: |
+          featurecloud app build .
+
+      - name: Log in to Docker
+        env:
+          FEATURECLOUD_USERNAME: ${{ secrets.FEATURECLOUD_USERNAME }}
+          FEATURECLOUD_PASSWORD: ${{ secrets.FEATURECLOUD_PASSWORD }}
+        run: |
+          echo "${FEATURECLOUD_PASSWORD}" | docker login featurecloud.ai -u "${FEATURECLOUD_USERNAME}" --password-stdin
+
+      - name: Publish FeatureCloud App
+        run: |
+          APP_NAME=$(grep -E '^DOCKER_IMAGE_NAME[ ]*=' Makefile | head -n1 | cut -d '=' -f2 | xargs)
+          echo "Extracted APP_NAME: $APP_NAME"
+          featurecloud app publish $APP_NAME

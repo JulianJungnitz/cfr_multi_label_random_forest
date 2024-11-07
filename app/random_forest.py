@@ -1,7 +1,7 @@
 # %%
 import yaml
 import logging
-import utils
+import utils as utils
 from sklearn.preprocessing import MultiLabelBinarizer
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -89,15 +89,14 @@ def filter_with_binarizer(df, pheno_binarizer, gene_binarizer):
 
 
 def duplicate_columns_with_multiple_diseases(df):
-    logger.info(f"DataFrame before exploding: {len(df)} rows before exploding.")
     df_exploded = df.explode(["diseases", "disease_names"]).reset_index(drop=True)
-    logger.info(f"DataFrame exploded: {len(df_exploded)} rows after exploding.")
+    logger.info(f"DataFrame before exploding: {len(df)} rows. Dataframe after exploded: {len(df_exploded)} rows after exploding.")
     return df_exploded
 
 
 def get_features_and_labels(df):
     features = df.drop(columns=["subject_id", "diseases", "disease_names"])
-    labels = df["disease_names"].apply(lambda x: 1 if not pd.isna(x) else 0)
+    labels = df["disease_names"].apply(lambda x: 0 if (isinstance(x, list) and len(x) == 0) or ((not isinstance(x, list)) and pd.isna(x)) else 1)
     return features, labels
 
 
@@ -126,6 +125,13 @@ def save_to_csv(subject_ids, disease, filename):
     df = pd.DataFrame({"subject_id": subject_ids, "disease": disease})
     df.to_csv(filename, index=False)
 
+def transform_data_into_features_and_labels(data, pheno_binarizer, gene_binarizer, explode_diseases):
+    df_final = filter_with_binarizer(data, pheno_binarizer, gene_binarizer)
+    if explode_diseases:
+        df_final = duplicate_columns_with_multiple_diseases(df_final)
+    features, labels = get_features_and_labels(df_final)
+    return features, labels
+
 def main():
     global logger
     global driver
@@ -134,8 +140,10 @@ def main():
     logger.info("Starting the program")
     driver = utils.connect_to_neo4j()
 
-    split_type = utils.read_config()["SPLIT_TYPE"]
+    config = utils.read_config()
+    split_type = config.get("SPLIT_TYPE", "control")
     split_by_control = split_type== "control"
+    explode_diseases = config.get("EXPLODE_DISEASES", True)
     logger.info(f"Split type: {split_by_control}")
 
     pheno_binarizer, gene_binarizer = get_all_binaries()
@@ -146,29 +154,20 @@ def main():
     # logger.info(f"Dataframe values of diseases: {df['disease_names']}")
 
     df, control = split_train_test(df,split_by_control)
-    logger.info(f"Control: {control}")
 
-    df_final = filter_with_binarizer(df, pheno_binarizer, gene_binarizer)
-    df_final = duplicate_columns_with_multiple_diseases(df_final)
-    features, labels = get_features_and_labels(df_final)
+    features, labels = transform_data_into_features_and_labels(df, pheno_binarizer, gene_binarizer, explode_diseases)
 
     clf = train_classifier(features, labels)
     
-    logger.info(f"Control1: {control}")
-    control = filter_with_binarizer(control, pheno_binarizer, gene_binarizer)
-    logger.info(f"Control2: {control}")
-    control = duplicate_columns_with_multiple_diseases(control)
-    logger.info(f"Control3: {control}")
-    control_features, control_labels = get_features_and_labels(control)
-    logger.info(f"Control features: {control_features}")
-    logger.info(f"Control labels: {control_labels}")
+    control_features, control_labels = transform_data_into_features_and_labels(control, pheno_binarizer, gene_binarizer, False)
+
 
     y_pred = predict_on_control(control_features, clf)
 
-    save_to_csv(control["subject_id"], y_pred, "predictions.csv")
-    logger.info(f"Predictions: {y_pred}")
-    logger.info(f"Control: {control_labels}")
+    save_to_csv(control["subject_id"], y_pred, "./predictions.csv")
 
+    logger.info(f"Shapes: {features.shape}, {labels.shape} ")
+    logger.info(f"Shapes Control: {control_features.shape}, {control_labels.shape} ")
     logger.info(f"Accuracy: {metrics.f1_score(control_labels, y_pred)}")
 
 

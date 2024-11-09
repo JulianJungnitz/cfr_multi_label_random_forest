@@ -2,3 +2,6 @@
 venv
 *.pyc
 config.yml
+
+e_log.txt
+i_log.txt

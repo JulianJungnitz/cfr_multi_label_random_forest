@@ -1,6 +1,6 @@
 
 ### PLEASE ADJUST THIS TO MATCH YOUR DEFINED APP NAME
-DOCKER_IMAGE_NAME=basic_ml_methods
+DOCKER_IMAGE_NAME=cfr_multi_label_random_forest
 
 
 ### All these Values should be correctly preconfigured

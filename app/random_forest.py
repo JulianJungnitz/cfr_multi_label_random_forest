@@ -25,13 +25,14 @@ def execute_query(query):
 
 def get_binarizer(query, key):
     data = execute_query(query)
+    print(data)
     data = [[record[key]] for record in data]
     binarizer = MultiLabelBinarizer()
     binarizer.fit_transform(data)
     return binarizer
 
 
-def get_all_binaries():
+def get_all_binaries(NUMBER_OF_SAMPLES):
     pheno_query = """
     MATCH (:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
     RETURN DISTINCT ph.id AS phenotype
@@ -40,10 +41,18 @@ def get_all_binaries():
     MATCH (:Biological_sample)-[:HAS_DAMAGE]->(g:Gene)
     RETURN DISTINCT g.id AS genes
     """
+    disease_query = f"""
+    MATCH (:Biological_sample)-[r:HAS_DISEASE]->(d:Disease)
+    WITH count(distinct r) as count, d
+    WHERE count > {NUMBER_OF_SAMPLES}
+    RETURN DISTINCT d.name AS diseases
+    """
 
+    
     pheno_binarizer = get_binarizer(pheno_query, "phenotype")
     gene_binarizer = get_binarizer(gene_query, "genes")
-    return pheno_binarizer, gene_binarizer
+    disease_binarizer = get_binarizer(disease_query, "diseases")
+    return pheno_binarizer, gene_binarizer, disease_binarizer
 
 
 def get_full_data_set(limit=None):
@@ -82,15 +91,9 @@ def duplicate_columns_with_multiple_diseases(df):
     return df_exploded
 
 
-def get_features_and_labels(df):
+def get_features_and_labels(df, disease_binarizer):
     features = df.drop(columns=["subject_id", "diseases", "disease_names"])
-    labels = df["disease_names"].apply(
-        lambda x: (
-            0
-            if (isinstance(x, list) and len(x) == 1 and x[0] == "control")
-            else 1
-        )
-    )
+    labels = disease_binarizer.transform(df["disease_names"])
     return features, labels
 
 
@@ -114,18 +117,20 @@ def predict_on_control(features, clf):
     return y_pred
 
 
-def save_to_csv(subject_ids, disease, filename):
+def save_to_csv(subject_ids, diseases_df, disease_binarizer, filename):
 
-    df = pd.DataFrame({"subject_id": subject_ids, "disease": disease})
+    df = pd.DataFrame({"subject_id": subject_ids,})
+    for i, disease in enumerate(diseases_df.T):
+        df[disease_binarizer.classes_[i]] = disease
     df.to_csv(filename, index=False)
 
 
 def transform_data_into_features_and_labels(
-    data, pheno_binarizer, gene_binarizer,
+    data, pheno_binarizer, gene_binarizer, disease_binarizer
 ):
     df_final = filter_with_binarizer(data, pheno_binarizer, gene_binarizer)
     # df_final = duplicate_columns_with_multiple_diseases(df_final)
-    features, labels = get_features_and_labels(df_final)
+    features, labels = get_features_and_labels(df_final, disease_binarizer)
     return features, labels
 
 
@@ -138,10 +143,12 @@ def main():
     driver = utils.connect_to_neo4j()
 
     config = utils.read_config()
+    MINIMUM_NUMBER_OF_SAMPLES = config["MINIMUM_NUMBER_OF_SAMPLES"]
 
-    pheno_binarizer, gene_binarizer = get_all_binaries()
 
-    data = get_full_data_set()
+    pheno_binarizer, gene_binarizer, disease_binarizer = get_all_binaries(MINIMUM_NUMBER_OF_SAMPLES)
+
+    data = get_full_data_set(MINIMUM_NUMBER_OF_SAMPLES)
     df = pd.DataFrame(data)
 
     # logger.info(f"Dataframe values of diseases: {df['disease_names']}")
@@ -149,23 +156,23 @@ def main():
     df, control = split_train_test(df)
 
     features, labels = transform_data_into_features_and_labels(
-        df, pheno_binarizer, gene_binarizer, 
+        df, pheno_binarizer, gene_binarizer, disease_binarizer
     )
 
     clf = train_classifier(features, labels)
 
     control_features, control_labels = transform_data_into_features_and_labels(
-        control, pheno_binarizer, gene_binarizer
+        control, pheno_binarizer, gene_binarizer, disease_binarizer
     )
 
     y_pred = predict_on_control(control_features, clf)
 
-    save_to_csv(control["subject_id"], y_pred, "./predictions.csv")
+    save_to_csv(control["subject_id"], y_pred,disease_binarizer, "./predictions.csv")
 
     logger.info("----------------------------------------")
     logger.info(f"Training Shapes: {features.shape}, {labels.shape} ")
     logger.info(f"Shapes Control: {control_features.shape}, {control_labels.shape} ")
-    logger.info(f"{metrics.classification_report(control_labels, y_pred)}")
+    logger.info(f"{metrics.classification_report(control_labels, y_pred, target_names=disease_binarizer.classes_)}")
 
     
 

@@ -2,7 +2,6 @@ Starting the program
 Connecting to Neo4j
 Neo4j Connect to bolt://83.229.84.12:7687 using tumaiReadonly
 Connected to Neo4j
-Split type: True
 
     MATCH (:Biological_sample)-[:HAS_PHENOTYPE]->(ph:Phenotype)
     RETURN DISTINCT ph.id AS phenotype
@@ -14,17 +13,22 @@ Query returned 152 records
     
 Query returned 500 records
 
-    MATCH (bs:Biological_sample)
+    MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
     Optional MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
     Optional MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
-    Optional MATCH (bs)-[:HAS_DISEASE]->(d:Disease)
     RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
     
-Query returned 100 records
-1687458
-DataFrame before exploding: 99 rows. Dataframe after exploded: 170 rows after exploding.
+Query returned 68 records
 Training classifier
 Classifier trained
-Shapes: (170, 652), (170,) 
-Shapes Control: (1, 652), (1,) 
-Accuracy: 1.0
+----------------------------------------
+Training Shapes: (54, 652), (54,) 
+Shapes Control: (14, 652), (14,) 
+              precision    recall  f1-score   support
+
+           1       1.00      1.00      1.00        14
+
+    accuracy                           1.00        14
+   macro avg       1.00      1.00      1.00        14
+weighted avg       1.00      1.00      1.00        14
+

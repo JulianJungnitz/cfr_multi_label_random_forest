@@ -5,7 +5,15 @@
 .ruff_cache
 .pytest_cache
 config.yml
+__pychache__/
 
 #venv Folder
 careforrare/
 data/
+
+
+
+# Ignore logs
+e_log.txt
+i_log.txt
+predictions.csv

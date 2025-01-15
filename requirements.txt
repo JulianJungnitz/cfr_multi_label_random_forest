@@ -39,7 +39,7 @@ python-dotenv==1.0.1
 pytz==2024.2
 PyYAML==6.0.1
 requests==2.31.0
-scikit-learn==1.5.2
+scikit-learn==1.6.1
 scipy==1.14.1
 setuptools==75.3.0
 six==1.16.0

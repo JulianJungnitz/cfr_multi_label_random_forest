@@ -25,7 +25,7 @@ def execute_query(query):
 
 def get_binarizer(query, key):
     data = execute_query(query)
-    print(data)
+    # print(data)
     data = [[record[key]] for record in data]
     binarizer = MultiLabelBinarizer()
     binarizer.fit_transform(data)
@@ -52,6 +52,7 @@ def get_all_binaries(NUMBER_OF_SAMPLES):
     pheno_binarizer = get_binarizer(pheno_query, "phenotype")
     gene_binarizer = get_binarizer(gene_query, "genes")
     disease_binarizer = get_binarizer(disease_query, "diseases")
+    print("Diseases: ", disease_binarizer.classes_)
     return pheno_binarizer, gene_binarizer, disease_binarizer
 
 
@@ -59,7 +60,7 @@ def get_full_data_set(limit=None):
     query = """
     MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
     Optional MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-    Optional MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
+    MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
     RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
     """
     if limit:
@@ -92,8 +93,11 @@ def duplicate_columns_with_multiple_diseases(df):
 
 
 def get_features_and_labels(df, disease_binarizer):
-    features = df.drop(columns=["subject_id", "diseases", "disease_names"])
+    print(df.columns)
     labels = disease_binarizer.transform(df["disease_names"])
+    features = df.drop(columns=["subject_id", "diseases", "disease_names"])
+    print("Feature shape: " , features.shape)
+    print("Label shape: " , labels.shape)
     return features, labels
 
 
@@ -143,7 +147,7 @@ def main():
     driver = utils.connect_to_neo4j()
 
     config = utils.read_config()
-    MINIMUM_NUMBER_OF_SAMPLES = config["MINIMUM_NUMBER_OF_SAMPLES"]
+    MINIMUM_NUMBER_OF_SAMPLES = config["MINIMUM_NUMBER_OF_SAMPLES_FOR_DISEASE_TO_BE_INCLUDED"]
 
 
     pheno_binarizer, gene_binarizer, disease_binarizer = get_all_binaries(MINIMUM_NUMBER_OF_SAMPLES)

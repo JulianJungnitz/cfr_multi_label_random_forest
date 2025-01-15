@@ -77,7 +77,7 @@ def filter_with_binarizer(df, pheno_binarizer, gene_binarizer):
     gene_features = gene_binarizer.transform(df["genes"])
     gene_df = pd.DataFrame(gene_features, columns=gene_binarizer.classes_)
 
-    df_final = pd.concat([df.reset_index(drop=True), pheno_df, gene_df], axis=1)
+    df_final = pd.concat([df.reset_index(drop=True), pheno_df, ], axis=1)
     df_final = df_final.drop(
         columns=["phenotypes", "genes", "proteins"], errors="ignore"
     )

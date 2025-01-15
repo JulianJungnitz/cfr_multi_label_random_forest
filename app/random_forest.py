@@ -123,9 +123,10 @@ def predict_on_control(features, clf):
 
 def save_to_csv(subject_ids, diseases_df, disease_binarizer, filename):
 
-    df = pd.DataFrame({"subject_id": subject_ids,})
-    for i, disease in enumerate(diseases_df.T):
-        df[disease_binarizer.classes_[i]] = disease
+    df = pd.DataFrame({"subject_id": subject_ids})
+    disease_columns = {disease_binarizer.classes_[i]: disease for i, disease in enumerate(diseases_df.T)}
+    disease_df = pd.DataFrame(disease_columns)
+    df = pd.concat([df, disease_df], axis=1)
     df.to_csv(filename, index=False)
 
 

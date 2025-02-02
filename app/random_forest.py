@@ -133,9 +133,13 @@ def save_to_csv(subject_ids, diseases_df, disease_binarizer, filename):
 def transform_data_into_features_and_labels(
     data, pheno_binarizer, gene_binarizer, disease_binarizer
 ):
+    print("Data length before: ", len(data))
     df_final = filter_with_binarizer(data, pheno_binarizer, gene_binarizer)
+    print("Data length after: ", len(df_final))
     # df_final = duplicate_columns_with_multiple_diseases(df_final)
     features, labels = get_features_and_labels(df_final, disease_binarizer)
+    print("Features shape: ", features.shape)
+    print("Labels shape: ", labels.shape)
     return features, labels
 
 

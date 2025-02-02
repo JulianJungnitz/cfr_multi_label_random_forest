@@ -56,15 +56,14 @@ def get_all_binaries(NUMBER_OF_SAMPLES):
     return pheno_binarizer, gene_binarizer, disease_binarizer
 
 
-def get_full_data_set(limit=None):
+def get_full_data_set():
     query = """
     MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
     Optional MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
      MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
     RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
     """
-    if limit:
-        query += f" LIMIT {limit}"
+    
     data = execute_query(query)
     return data
 
@@ -157,7 +156,7 @@ def main():
 
     pheno_binarizer, gene_binarizer, disease_binarizer = get_all_binaries(MINIMUM_NUMBER_OF_SAMPLES)
 
-    data = get_full_data_set(MINIMUM_NUMBER_OF_SAMPLES)
+    data = get_full_data_set()
     df = pd.DataFrame(data)
 
     # logger.info(f"Dataframe values of diseases: {df['disease_names']}")

@@ -58,7 +58,7 @@ def get_all_binaries(NUMBER_OF_SAMPLES):
 
 def get_full_data_set(disease_binarizer):
     disease_names = disease_binarizer.classes_
-    disease_list = [f'"{disease}"' for disease in disease_names]
+    disease_list = [f'{disease}' for disease in disease_names]
     query = f"""
     MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
     MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)

@@ -59,7 +59,7 @@ def get_all_binaries(NUMBER_OF_SAMPLES):
 def get_full_data_set():
     query = """
     MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
-    Optional MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
+    MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
     Optional MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
     RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
     """

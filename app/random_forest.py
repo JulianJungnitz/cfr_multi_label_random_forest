@@ -68,10 +68,12 @@ def get_full_data_set():
     return data
 
 
-def filter_with_binarizer(df, pheno_binarizer, gene_binarizer):
+def filter_with_binarizer(df, pheno_binarizer, ): # gene_binarizer
 
     pheno_features = pheno_binarizer.transform(df["phenotypes"])
     pheno_df = pd.DataFrame(pheno_features, columns=pheno_binarizer.classes_)
+    print(pheno_df.head())
+    print("len of pheno_df: ", len(pheno_df))
 
     # gene_features = gene_binarizer.transform(df["genes"])
     # gene_df = pd.DataFrame(gene_features, columns=gene_binarizer.classes_)

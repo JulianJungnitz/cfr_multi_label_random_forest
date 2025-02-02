@@ -73,10 +73,10 @@ def filter_with_binarizer(df, pheno_binarizer, gene_binarizer):
     pheno_features = pheno_binarizer.transform(df["phenotypes"])
     pheno_df = pd.DataFrame(pheno_features, columns=pheno_binarizer.classes_)
 
-    gene_features = gene_binarizer.transform(df["genes"])
-    gene_df = pd.DataFrame(gene_features, columns=gene_binarizer.classes_)
+    # gene_features = gene_binarizer.transform(df["genes"])
+    # gene_df = pd.DataFrame(gene_features, columns=gene_binarizer.classes_)
 
-    df_final = pd.concat([df.reset_index(drop=True), pheno_df, gene_df], axis=1)
+    df_final = pd.concat([df.reset_index(drop=True), pheno_df], axis=1) # gene_df
     df_final = df_final.drop(
         columns=["phenotypes", "genes", "proteins"], errors="ignore"
     )
@@ -130,10 +130,10 @@ def save_to_csv(subject_ids, diseases_df, disease_binarizer, filename):
 
 
 def transform_data_into_features_and_labels(
-    data, pheno_binarizer, gene_binarizer, disease_binarizer
+    data, pheno_binarizer, disease_binarizer #gene_binarizer
 ):
     print("Data length before: ", len(data))
-    df_final = filter_with_binarizer(data, pheno_binarizer, gene_binarizer)
+    df_final = filter_with_binarizer(data, pheno_binarizer, ) #gene_binarizer
     print("Data length after: ", len(df_final))
     # df_final = duplicate_columns_with_multiple_diseases(df_final)
     features, labels = get_features_and_labels(df_final, disease_binarizer)
@@ -158,19 +158,20 @@ def main():
 
     data = get_full_data_set()
     df = pd.DataFrame(data)
+    print(df.head())
 
     # logger.info(f"Dataframe values of diseases: {df['disease_names']}")
 
     df, control = split_train_test(df)
 
     features, labels = transform_data_into_features_and_labels(
-        df, pheno_binarizer, gene_binarizer, disease_binarizer
+        df, pheno_binarizer, disease_binarizer # gene_binarizer
     )
 
     clf = train_classifier(features, labels)
 
     control_features, control_labels = transform_data_into_features_and_labels(
-        control, pheno_binarizer, gene_binarizer, disease_binarizer
+        control, pheno_binarizer, disease_binarizer # gene_binarizer
     )
 
     y_pred = predict_on_control(control_features, clf)

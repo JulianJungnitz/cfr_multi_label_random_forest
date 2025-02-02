@@ -74,6 +74,7 @@ def create_logger():
 
 
 def read_config(file_path=f"{INPUT_DIR}/config.yml",):
+    print("Reading config file at ", file_path)
     try:
         with open(file_path, "r") as config_file:
             config = yaml.safe_load(config_file)

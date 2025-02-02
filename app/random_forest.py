@@ -56,12 +56,18 @@ def get_all_binaries(NUMBER_OF_SAMPLES):
     return pheno_binarizer, gene_binarizer, disease_binarizer
 
 
-def get_full_data_set():
-    query = """
+def get_full_data_set(disease_binarizer):
+    disease_names = disease_binarizer.classes_
+    query = f"""
     MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
     MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
-    Optional MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
-    RETURN ID(bs) as subject_id, collect(distinct ph.id) AS phenotypes, collect(distinct g.id) AS genes, collect(distinct d.id) as diseases, collect(distinct d.name) AS disease_names
+    OPTIONAL MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
+    WHERE d.name IN {disease_names}
+    RETURN ID(bs) as subject_id, 
+           collect(distinct ph.id) AS phenotypes, 
+           collect(distinct g.id) AS genes, 
+           collect(distinct d.id) AS diseases, 
+           collect(distinct d.name) AS disease_names
     """
     
     data = execute_query(query)
@@ -156,9 +162,9 @@ def main():
     MINIMUM_NUMBER_OF_SAMPLES = config["MINIMUM_NUMBER_OF_SAMPLES_FOR_DISEASE_TO_BE_INCLUDED"]
 
 
-    pheno_binarizer, gene_binarizer, disease_binarizer = get_all_binaries(MINIMUM_NUMBER_OF_SAMPLES)
+    pheno_binarizer, gene_binarizer,disease_binarizer  = get_all_binaries(MINIMUM_NUMBER_OF_SAMPLES)
 
-    data = get_full_data_set()
+    data = get_full_data_set(disease_binarizer)
     df = pd.DataFrame(data)
     print(df.head())
 

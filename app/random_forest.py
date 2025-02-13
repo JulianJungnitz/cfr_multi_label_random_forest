@@ -150,6 +150,10 @@ def transform_data_into_features_and_labels(
     print("Labels shape: ", labels.shape)
     return features, labels
 
+def calculate_average_diseases(y_pred):
+    disease_counts = y_pred.sum(axis=1)
+    average_diseases = disease_counts.mean()
+    return average_diseases
 
 def main():
     global logger
@@ -184,6 +188,10 @@ def main():
     )
 
     y_pred = predict_on_control(control_features, clf)
+
+    average_dis = calculate_average_diseases(y_pred)
+    logger.info(f"Average number of diseases per subject: {average_dis}")
+
 
     save_to_csv(control["subject_id"], y_pred,disease_binarizer, "./predictions.csv")
 

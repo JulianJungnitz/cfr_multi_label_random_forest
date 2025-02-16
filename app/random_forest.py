@@ -60,9 +60,9 @@ def get_full_data_set(disease_binarizer):
     disease_names = disease_binarizer.classes_
     disease_list = [disease for disease in disease_names]
     query = f"""
-    MATCH (bs:Biological_sample)-[:HAS_DISEASE]->(d:Disease)
+    MATCH (bs:Biological_sample)  -[:HAS_PHENOTYPE]->(ph:Phenotype)  
+    OPTIONAL MATCH (bs)-[:HAS_DISEASE]->(d:Disease)
     WHERE d.name IN {disease_list}
-    MATCH (bs)-[:HAS_PHENOTYPE]->(ph:Phenotype)
     OPTIONAL MATCH (bs)-[:HAS_DAMAGE]->(g:Gene)
     RETURN ID(bs) as subject_id, 
            collect(distinct ph.id) AS phenotypes, 

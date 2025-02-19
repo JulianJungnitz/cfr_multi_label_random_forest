@@ -121,6 +121,8 @@ def split_train_test(
     df,
 ):
     df, control = train_test_split(df, test_size=0.2, random_state=1)
+
+    print("Head control: ", control.head())
     return df, control
 
 

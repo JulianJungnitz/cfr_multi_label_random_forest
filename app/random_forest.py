@@ -118,11 +118,24 @@ def train_classifier(features, labels):
 
 
 def split_train_test(
-    df,
+    df, MINIMUM_NUMBER_OF_SAMPLES=4, driver=None
 ):
     df, control = train_test_split(df, test_size=0.2, random_state=1)
 
     print("Head control: ", control.head())
+
+    query = f"""
+    MATCH (bs:Biological_sample)-[r:HAS_DISEASE]->(d:Disease)
+    WITH count(distinct r) as count, d
+    WHERE count > {MINIMUM_NUMBER_OF_SAMPLES}
+    RETURN DISTINCT ID(bs) AS subject_id
+    """
+    patient_ids = execute_query(query)
+    patient_ids = [record['subject_id'] for record in patient_ids]
+    print("Before filter: ", len(control))
+    control = control[control['subject_id'].isin(patient_ids)]
+    print("After filter: ", len(control))
+
     return df, control
 
 
@@ -177,7 +190,7 @@ def main():
 
     # logger.info(f"Dataframe values of diseases: {df['disease_names']}")
 
-    df, control = split_train_test(df)
+    df, control = split_train_test(df, MINIMUM_NUMBER_OF_SAMPLES= MINIMUM_NUMBER_OF_SAMPLES, driver=driver)
 
     features, labels = transform_data_into_features_and_labels(
         df, pheno_binarizer, disease_binarizer # gene_binarizer

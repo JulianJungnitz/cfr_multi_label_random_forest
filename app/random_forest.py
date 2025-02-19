@@ -128,7 +128,7 @@ def split_train_test(
     MATCH (bs:Biological_sample)-[r:HAS_DISEASE]->(d:Disease)
     WITH count(distinct r) as count, d
     WHERE count > {MINIMUM_NUMBER_OF_SAMPLES}
-    RETURN DISTINCT ID(bs) AS subject_id
+    RETURN DISTINCT bs.id AS subject_id
     """
     patient_ids = execute_query(query)
     patient_ids = [record['subject_id'] for record in patient_ids]
